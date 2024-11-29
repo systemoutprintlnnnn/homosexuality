@@ -57,7 +57,7 @@ class BilibiliScraper:
 
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client['bilibili']
-        self.video_comments_collection = self.db['video_comments_v3']
+        self.video_comments_collection = self.db['video_comments_v4']
         self.filted_video_collection = self.db['filted_video']
         self.snowflake = SnowflakeGenerator(instance=1)
 
@@ -245,11 +245,14 @@ class BilibiliScraper:
         is_end = False
         while not is_end or count < 100000:
             # 如果已存在不更新直接跳过
-            if self.video_comments_collection.find_one({'aid': oid, 'page': page}):
+            query_res = self.video_comments_collection.find_one({'aid': oid, 'page': page})
+            if query_res:
                 print(f"视频   {title}   第{page}页    已存在，跳过")
                 page += 1
+                count += query_res.get('page_count')
+                offset = query_res.get('offset')
                 continue
-            sleep(random.randint(10, 30))
+            sleep(random.randint(1, 3))
             comments = []
             commentsInfo = []
             # 获取评论
@@ -319,7 +322,8 @@ class BilibiliScraper:
                 'commentsInfo': commentsInfo,
                 'keyword': keyword,
                 'page': page,
-                'page_count': page_count
+                'page_count': page_count,
+                'offset': offset
             }
 
             self.video_comments_collection.insert_one(insert_value)
@@ -368,7 +372,6 @@ class BilibiliScraper:
             is_les = any(keyword in title for keyword in self.les_keywords)
             is_homo = any(keyword in title for keyword in self.homo_keywords)
 
-
             if is_gay:
                 category = "gay"
                 video_info['category'] = category
@@ -380,20 +383,19 @@ class BilibiliScraper:
                 video_info['category'] = category
             else:
                 self.filted_video_collection.update_one(
-                        {'_id': aid},
-                        {
-                            '$set': {
-                                'title': title,
-                                'video_info': video_info,
-                                'keyword': keyword,
-                                'update_time': datetime.datetime.now().timestamp(),
-                                'source': "bilibili"
-                            }
-                        },
-                        upsert=True
+                    {'_id': aid},
+                    {
+                        '$set': {
+                            'title': title,
+                            'video_info': video_info,
+                            'keyword': keyword,
+                            'update_time': datetime.datetime.now().timestamp(),
+                            'source': "bilibili"
+                        }
+                    },
+                    upsert=True
                 )
                 continue
-
 
             # print(video_info)
             video_response.append(video_info)

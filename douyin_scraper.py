@@ -40,6 +40,9 @@ class DouyinScraper:
         data = self.search_video(content_type, offset, sort_type, keyword)
         for item in data:
             aweme_info = item.get('aweme_info')
+            if aweme_info == None:
+                print(item)
+                print(data)
             aweme_id = aweme_info.get('aweme_id')
             title = aweme_info.get('desc')
             category = "unknown"
@@ -90,9 +93,11 @@ class DouyinScraper:
             has_more = 1
             page = 1
             while has_more == 1:
-                if self.video_comments_collection.find_one({'aweme_id': aweme_id, 'page': page}):
+                query_res = self.video_comments_collection.find_one({'aweme_id': aweme_id, 'page': page})
+                if query_res:
                     print(f"视频   [{title}]   [第{page}页]    已存在，跳过")
                     page += 1
+                    cursor = query_res.get('cursor')
                     continue
 
                 while True:

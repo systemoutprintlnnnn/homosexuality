@@ -44,9 +44,8 @@ class Bilibili:
         # replies = c['replies']
         # print(replies)
 
-
-
-        for i in range(1, 10):
+        # 一次20个视频
+        for i in range(1, 1):
             await b.get_video_comments_by_keyword(keyword,i)
 
         # 获取指定视频
