@@ -11,7 +11,7 @@ from bilibili_api.comment import OrderType
 from bilibili_api.search import SearchObjectType, OrderVideo
 from pymongo import MongoClient
 
-from utils.credentialManager import CredentialManager
+from utils.credential_manager import CredentialManager
 from snowflake import SnowflakeGenerator
 
 # SESSIONDATA = "df18be41%2C1748400382%2Cf8a4e%2Ab2CjDauk3D8zpQxgKS15MCUkzYBSVYI71pOCPRCT8uIDbaVbezSaRJhmmOdm1NjbPca5wSVko2LTRaYnFSdU9QMVN2VTVWcTRyM19taS0xN2Z5SU41MXhYNzBMRnhwZ0ZGZmpEY0FUWnVONFA5YVBqRmRXZjBvQkNQWWdmZ1h5bXZjVVdCOVQ3SlVRIIEC"
@@ -28,7 +28,7 @@ AC_TIME_VALUE = "240dcbc7d62168efdcc9739e461a9db1"
 
 GAY_KEYWORDS = ["男同", "Gay", "gay", "夫夫"]
 LES_KEYWORDS = ["女同", "Les", "les", "拉拉", "百合", "橘", "姬"]
-HOMO_KEYWORDS = ["同性"]
+HOMO_KEYWORDS = ["同性", "性别", "性取向"]
 
 """
 根据oid（资源id）获取视频评论
@@ -357,18 +357,27 @@ class BilibiliScraper:
             # elif is_les:
             #     category = "les"
 
+            video_info['tag'] = tag
+            video_info['aid'] = aid
+            video_info['bvid'] = bvid
+            video_info['title'] = title
+
             # 这里加强了筛选条件，只考虑视频标题
             # 没有标签的直接筛掉
             is_gay = any(keyword in title for keyword in self.gay_keywords)
             is_les = any(keyword in title for keyword in self.les_keywords)
             is_homo = any(keyword in title for keyword in self.homo_keywords)
 
+
             if is_gay:
                 category = "gay"
+                video_info['category'] = category
             elif is_les:
                 category = "les"
+                video_info['category'] = category
             elif is_homo:
                 category = "homo"
+                video_info['category'] = category
             else:
                 self.filted_video_collection.update_one(
                         {'_id': aid},
@@ -377,18 +386,15 @@ class BilibiliScraper:
                                 'title': title,
                                 'video_info': video_info,
                                 'keyword': keyword,
-                                'update_time': datetime.datetime.now().timestamp()
+                                'update_time': datetime.datetime.now().timestamp(),
+                                'source': "bilibili"
                             }
                         },
                         upsert=True
                 )
                 continue
 
-            video_info['tag'] = tag
-            video_info['aid'] = aid
-            video_info['bvid'] = bvid
-            video_info['title'] = title
-            video_info['category'] = category
+
             # print(video_info)
             video_response.append(video_info)
 
