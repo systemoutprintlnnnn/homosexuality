@@ -41,8 +41,8 @@ class DataProcessor:
 def clean_data():
 
     # file_path = "comments/bilibili/merge/"
-    file_path = "comments/bilibili/merge_v2/"
-    target_path = "comments/bilibili/cleaned_v2/"
+    file_path = "comments/bilibili/categorized/merged/homo_merged/"
+    target_path = "comments/bilibili/categorized/cleaned/homo_cleaned/"
     os.makedirs(target_path, exist_ok=True)
     for file in os.listdir(file_path):
         with open(file_path + file, 'r', encoding='utf-8') as f:

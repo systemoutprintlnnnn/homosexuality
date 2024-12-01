@@ -1,4 +1,5 @@
 import json
+import math
 import os
 
 from gensim import corpora
@@ -31,7 +32,7 @@ def build_dictionary_and_corpus(tokenized_data):
 
 # 训练LDA模型
 def train_lda_model(corpus, dictionary, num_topics=20, passes=15, iteration=3000, eta=0.01):
-    print(f"开始训练LDA模型，主题数: {num_topics}，迭代次数: {passes}")
+    # print(f"开始训练LDA模型，主题数: {num_topics}")
     # lda_model = LdaModel(corpus=corpus, id2word=dictionary, num_topics=num_topics, passes=passes)
     lda_model = LdaMulticore(corpus=corpus, id2word=dictionary, num_topics=num_topics)
     return lda_model
@@ -59,7 +60,8 @@ def visualize_lda_model(lda_model, corpus, dictionary):
 
 # 计算困惑度和一致性
 def evaluate_lda_model(lda_model, corpus, dictionary, texts):
-    perplexity = lda_model.log_perplexity(corpus)
+    log_perplexity = lda_model.log_perplexity(corpus)
+    perplexity = math.exp(log_perplexity)
     coherence_model_lda = CoherenceModel(model=lda_model, texts=texts, dictionary=dictionary, coherence='c_v')
     coherence = coherence_model_lda.get_coherence()
     return perplexity, coherence
@@ -71,7 +73,7 @@ def show_plot(perplexities, coherences, min_topics, max_topics, step):
     plt.plot(range(min_topics, max_topics + 1, step), perplexities, marker='o')
     plt.title("Perplexity Scores")
     plt.xlabel("Number of Topics")
-    plt.ylabel("Log Perplexity")
+    plt.ylabel("Perplexity")
     # 一致性曲线
     plt.subplot(1, 2, 2)
     plt.plot(range(min_topics, max_topics + 1, step), coherences, marker='o', color='green')
@@ -114,7 +116,7 @@ def find_best_lda_model(min_topics, max_topics, step):
     print_lda_topics(best_lda_model)
     return best_lda_model, perplexities, coherences
 
-def generate_wordcloud(lda_model, topic_id, num_words=30):
+def generate_wordcloud(lda_model, topic_id, num_words=50):
     # 获取指定主题的词语及其权重
     topic_words = lda_model.show_topic(topic_id, topn=num_words)
     word_freq = {word: weight for word, weight in topic_words}
@@ -123,7 +125,7 @@ def generate_wordcloud(lda_model, topic_id, num_words=30):
     wordcloud = WordCloud(width=800, height=400, background_color='white', font_path=font_path).generate_from_frequencies(word_freq)
 
     # 显示词云图
-    plt.figure(figsize=(10, 5))
+    plt.figure()
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
     plt.title(f'Topic #{topic_id}')
@@ -144,7 +146,9 @@ def generate_wordcloud(lda_model, topic_id, num_words=30):
 if __name__ == "__main__":
     num_cores = multiprocessing.cpu_count()
     # 示例用法
-    file_path = 'comments/bilibili/tokenized/TOKENIZED_CLEANED__FEMALE__comments_all.json'
+    # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__MALE__comments_all.json'
+    # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__UNKNOWN__comments_all.json'
+    file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__FEMALE__comments_all.json'
     tokenized_data = load_tokenized_file(file_path)
     dictionary, corpus = build_dictionary_and_corpus(tokenized_data)
 
@@ -154,9 +158,9 @@ if __name__ == "__main__":
     # # 输出LDA模型的主题和相关词语
     # print_lda_topics(lda_model)
 
-    min_topics = 2
-    max_topics = 100
-    step = 2
+    min_topics = 5
+    max_topics = 300
+    step = 5
 
     best_lda_model, perplexities, coherences = find_best_lda_model(min_topics, max_topics, step)
     # 输出困惑度、一致性曲线
@@ -166,4 +170,5 @@ if __name__ == "__main__":
     visualize_lda_model(best_lda_model, corpus, dictionary)
 
     # 生成词云图
-    generate_wordcloud(best_lda_model, 0)
+    for i in range(40, 100, 10):
+        generate_wordcloud(best_lda_model, 0, i)

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 
 from pymongo import MongoClient
 
@@ -9,10 +10,10 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['bilibili']
 collection = db['video_comments_v4']
 
-
 """
 将数据库中的评论数据根据aid导出为JSON文件
 """
+
 
 def export_comments_to_json(aid):
     # 根据aid筛选出同一个视频的所有评论
@@ -50,9 +51,11 @@ def export_comments_to_json(aid):
 
     print(f"[{title}]  导出成功\n文件名: {file_name}\n")
 
+
 """
     清洗文件名字符串
 """
+
 
 def sanitize_filename(filename):
     filename = re.sub(r'<.*?>', '', filename)
@@ -78,8 +81,8 @@ def get_json_files():
 
 
 def categorize_by_gender():
-    raw_file_path = "comments/bilibili/raw/"
-    processed_file_path = "comments/bilibili/processed/"
+    raw_file_path = "comments/bilibili/categorized/homo/"
+    processed_file_path = "comments/bilibili/categorized/processed_homo/"
     # 读取所有原文件
     for file in os.listdir(raw_file_path):
         with open(raw_file_path + file, 'r', encoding='utf-8') as f:
@@ -112,6 +115,7 @@ def categorize_by_gender():
                     'commentsInfo': c.get(list(c.keys())[0])
                 }
                 # 输出JSON文件
+                os.makedirs(processed_file_path, exist_ok=True)
                 file_name = f"{processed_file_path}{list(c.keys())[0]}__{file}"
                 with open(file_name, 'w', encoding='utf-8') as f:
                     json.dump(json_data, f, ensure_ascii=False, indent=4)
@@ -120,8 +124,10 @@ def categorize_by_gender():
 
 
 def merge_comments():
-    raw_file_path = "comments/bilibili/raw/"
-    processed_file_path = "comments/bilibili/merge_v2/"
+    # raw_file_path = "comments/bilibili/raw/"
+    raw_file_path = "comments/bilibili/categorized/female/"
+    # processed_file_path = "comments/bilibili/merge_v2/"
+    processed_file_path = "comments/bilibili/categorized/female_merged/"
     comments_male = []
     comments_female = []
     comments_unknown = []
@@ -151,7 +157,6 @@ def merge_comments():
                 elif comment['usex'] == '保密':
                     comments_unknown.append(comment['content'])
 
-
     # 构建JSON数据
     for c in comments_all:
         json_data = {
@@ -159,11 +164,41 @@ def merge_comments():
         }
         # 输出JSON文件
         os.makedirs(processed_file_path, exist_ok=True)
-        file_name = f"{processed_file_path}{list(c.keys())[0]}__comments_all.json"
+        # file_name = f"{processed_file_path}{list(c.keys())[0]}__comments_all.json"
+        file_name = f"{processed_file_path}{list(c.keys())[0]}__comments_to_female.json"
         with open(file_name, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
         print(f"导出成功, 文件名: {file_name}\n")
+
+
+def category_by_keyword():
+    # 提取视频关键字
+    raw_file_path = "comments/bilibili/raw/"
+    processed_file_path = "comments/bilibili/categorized/female"
+    keyword_male = ["男同性恋", "男生和男生谈恋爱日常"]
+    keyword_female = ["女同性恋", "le"]
+    keyword_homo = ["同性恋"]
+    male_path = "male/"
+    female_path = "female/"
+    homo_path = "homo/"
+    # 读取所有原文件
+    for file in os.listdir(raw_file_path):
+        with open(raw_file_path + file, 'r', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except:
+                print(f"文件读取失败: {file}")
+            keyword = data['keyword']
+            if keyword in keyword_male:
+                target_path = processed_file_path + male_path
+            elif keyword in keyword_female:
+                target_path = processed_file_path + female_path
+            elif keyword in keyword_homo:
+                target_path = processed_file_path + homo_path
+            shutil.copy(raw_file_path + file, target_path + file)
+
+            print(f"导出成功, 文件名: {file}\n")
 
 
 if __name__ == "__main__":
@@ -174,5 +209,10 @@ if __name__ == "__main__":
     # categorize_by_gender()
 
     # 合并所有相同性别的评论数据
-    merge_comments()
+    # merge_comments()
+
+    # 将所有评论信息根据视频类别分类
+    # category_by_keyword()
     pass
+
+

@@ -9,7 +9,9 @@ class BatchTokenizer:
                  input_dir: str,
                  output_dir: str,
                  mode: str = 'precise',
-                 remove_stopwords: bool = True):
+                 remove_stopwords: bool = True,
+                 custom_words: Optional[List[str]] = None,
+                 custom_dict: Optional[List[str]] = None):
         """
         批量分词处理器
 
@@ -24,6 +26,8 @@ class BatchTokenizer:
         self.mode = mode
         self.remove_stopwords = remove_stopwords
 
+        self.custom_words = set(custom_words) if custom_words else set()
+
         # 设置日志
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(levelname)s: %(message)s')
@@ -34,6 +38,9 @@ class BatchTokenizer:
 
         # 加载停用词
         self.stopwords = self._load_stopwords()
+
+        for word in custom_dict:
+            jieba.add_word(word)
 
     def _load_stopwords(self) -> set:
         """
@@ -66,6 +73,8 @@ class BatchTokenizer:
             words = [word for word in words
                      if word.strip() and word not in self.stopwords]
 
+        # 去除自定义词
+        words = [word for word in words if word not in self.custom_words]
         return words
 
     def process_file(self, input_file: str, output_file: str):
@@ -126,13 +135,18 @@ class BatchTokenizer:
                 self.process_file(input_path, output_path)
 
 def main():
-
-
+    custom_words = ['同性', '同性恋', '说', '!', '…', '想', '异性恋', '异性', '男', '女', 'txl', '性别']
+    custom_dict = ['妈的', '你俩']
     tokenizer = BatchTokenizer(
+        # input_dir='comments/bilibili/categorized/cleaned/homo_cleaned/',
+        # output_dir='comments/bilibili/categorized/tokenized/homo_tokenized/',
         input_dir='comments/bilibili/cleaned_v2',
-        output_dir='comments/bilibili/tokenized',
+        output_dir='comments/bilibili/tokenized_v3',
         mode='precise',  # 分词模式
-        remove_stopwords=True  # 是否去除停用词
+        remove_stopwords=True,  # 是否去除停用词
+        custom_words=custom_words,
+        custom_dict=custom_dict
+
     )
 
     # 执行批量分词
