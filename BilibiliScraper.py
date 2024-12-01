@@ -14,17 +14,17 @@ from pymongo import MongoClient
 from utils.credential_manager import CredentialManager
 from snowflake import SnowflakeGenerator
 
-# SESSIONDATA = "df18be41%2C1748400382%2Cf8a4e%2Ab2CjDauk3D8zpQxgKS15MCUkzYBSVYI71pOCPRCT8uIDbaVbezSaRJhmmOdm1NjbPca5wSVko2LTRaYnFSdU9QMVN2VTVWcTRyM19taS0xN2Z5SU41MXhYNzBMRnhwZ0ZGZmpEY0FUWnVONFA5YVBqRmRXZjBvQkNQWWdmZ1h5bXZjVVdCOVQ3SlVRIIEC"
-# BILI_JCT = "f5091aeb77b118cea0695950cb5d8c45"
-# BUVID3 = "A2D4DF5D-8110-2AD2-712E-CB70E86E460D66077infoc"
-# DEDEUSERID = "35556285"
-# AC_TIME_VALUE = "90c77ffbe73718c3027943bb866b2bb2"
+SESSIONDATA = "df18be41%2C1748400382%2Cf8a4e%2Ab2CjDauk3D8zpQxgKS15MCUkzYBSVYI71pOCPRCT8uIDbaVbezSaRJhmmOdm1NjbPca5wSVko2LTRaYnFSdU9QMVN2VTVWcTRyM19taS0xN2Z5SU41MXhYNzBMRnhwZ0ZGZmpEY0FUWnVONFA5YVBqRmRXZjBvQkNQWWdmZ1h5bXZjVVdCOVQ3SlVRIIEC"
+BILI_JCT = "f5091aeb77b118cea0695950cb5d8c45"
+BUVID3 = "A2D4DF5D-8110-2AD2-712E-CB70E86E460D66077infoc"
+DEDEUSERID = "35556285"
+AC_TIME_VALUE = "90c77ffbe73718c3027943bb866b2bb2"
 
-SESSIONDATA = "5c6212a6%2C1748369428%2C0447a%2Ab1CjB_fxfOr4CgIz7d9sUI8GO3Ut41Esv4a_T4Kva3QDmWZLaqFbko9lBk4d0RojQC9eISVnN1U1V4MHVwYWloZ1VoSVRXZnNCZWF1V3QwTm1SQlhaOFczVkNRSkVhME1FYmhDMGhzTEs4a1RZUlgxbFlQcmd5YTkxd0VQNmNrMWFhT09sRkxrajZ3IIEC"
-BILI_JCT = "1dd1c9707667a29b784aa4b9813093ac"
-BUVID3 = "511C591E-F1B2-96DD-F144-C09AB3AB450C91088infoc"
-DEDEUSERID = "3546810735921249"
-AC_TIME_VALUE = "240dcbc7d62168efdcc9739e461a9db1"
+# SESSIONDATA = "5c6212a6%2C1748369428%2C0447a%2Ab1CjB_fxfOr4CgIz7d9sUI8GO3Ut41Esv4a_T4Kva3QDmWZLaqFbko9lBk4d0RojQC9eISVnN1U1V4MHVwYWloZ1VoSVRXZnNCZWF1V3QwTm1SQlhaOFczVkNRSkVhME1FYmhDMGhzTEs4a1RZUlgxbFlQcmd5YTkxd0VQNmNrMWFhT09sRkxrajZ3IIEC"
+# BILI_JCT = "1dd1c9707667a29b784aa4b9813093ac"
+# BUVID3 = "511C591E-F1B2-96DD-F144-C09AB3AB450C91088infoc"
+# DEDEUSERID = "3546810735921249"
+# AC_TIME_VALUE = "240dcbc7d62168efdcc9739e461a9db1"
 
 GAY_KEYWORDS = ["男同", "Gay", "gay", "夫夫"]
 LES_KEYWORDS = ["女同", "Les", "les", "拉拉", "百合", "橘", "姬"]
@@ -268,7 +268,10 @@ class BilibiliScraper:
                 #         await asyncio.sleep(t)
                 #     else:
                 #         raise e
-
+                except ResponseCodeException as e:
+                    if e.code == 12061:
+                        print(f"视频 {title}： {e.msg}")
+                        return
                 except Exception as e:
                     if e.status != 200:
                         print(f"Request failed with status {e.status}, retrying in {t} seconds...")
@@ -334,7 +337,9 @@ class BilibiliScraper:
     async def get_video_comments_by_keyword(self, keyword: str, page: int = 1):
         # 搜索视频
         # search_result = await search.search(keyword, page)
-        search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.CLICK)
+        # search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.TOTALRANK, page=1)
+        search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.CLICK,
+                                                    page=page)
         results = search_result.get('result', [])
         # for temp in results:
         # if (temp.get('result_type') in 'video'):

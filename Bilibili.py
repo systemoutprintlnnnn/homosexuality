@@ -37,7 +37,9 @@ class Bilibili:
 
     async def main(self) -> None:
         b = BilibiliScraper()
-        keyword = "同性恋"
+        # keyword = "同性恋"
+        keyword_list = ["女同性恋", "男同性恋", "同性恋", "le", "男生和男生谈恋爱日常"]
+
 
         # test
         # c = await comment.get_comments_lazy(113564136249182, comment.CommentResourceType.VIDEO, '',OrderType.LIKE, self.credential)
@@ -45,11 +47,14 @@ class Bilibili:
         # print(replies)
 
         # 一次20个视频
-        for i in range(1, 1):
-            await b.get_video_comments_by_keyword(keyword,i)
+        for i in range(2, 5):
+            for keyword in keyword_list:
+                await b.get_video_comments_by_keyword(keyword,i)
 
         # 获取指定视频
         # await b.get_all_comments_by_video("337044251", self.credential, OrderType.LIKE)
+
+
 
 
 if __name__ == "__main__":

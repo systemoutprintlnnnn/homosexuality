@@ -105,6 +105,7 @@ class DouyinScraper:
                         comments_data = self.get_comments(aweme_id, cursor)
                         break
                     except Exception as e:
+
                         if e.status != 200:
                             t = random.randint(1800, 3000)
                             print(f"Request failed with status {e.status}, retrying in {t} seconds...")
