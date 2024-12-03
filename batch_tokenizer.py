@@ -135,13 +135,16 @@ class BatchTokenizer:
                 self.process_file(input_path, output_path)
 
 def main():
-    custom_words = ['同性', '同性恋', '说', '!', '…', '想', '异性恋', '异性', '男', '女', 'txl', '性别']
-    custom_dict = ['妈的', '你俩']
+    custom_words = ['同性', '同性恋', '说', '!', '…', '想', '异性恋', '异性', '男', '女', 'txl', '性别', '￴', '‍', '❤']
+    custom_dict = ['妈的', '你俩', '评论区', '尬笑']
     tokenizer = BatchTokenizer(
         # input_dir='comments/bilibili/categorized/cleaned/homo_cleaned/',
         # output_dir='comments/bilibili/categorized/tokenized/homo_tokenized/',
-        input_dir='comments/bilibili/cleaned_v2',
-        output_dir='comments/bilibili/tokenized_v3',
+        # input_dir='comments/bilibili/cleaned_v2',
+        input_dir='comments/douyin/cleaned',
+        # output_dir='comments/bilibili/tokenized_v3',
+        output_dir='comments/douyin/tokenized',
+
         mode='precise',  # 分词模式
         remove_stopwords=True,  # 是否去除停用词
         custom_words=custom_words,

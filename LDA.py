@@ -3,6 +3,7 @@ import math
 import os
 import sys
 
+from anyio import sleep
 from gensim import corpora
 from gensim.models import LdaModel, CoherenceModel, LdaMulticore
 import pyLDAvis
@@ -11,11 +12,13 @@ import matplotlib.pyplot as plt
 import multiprocessing
 from wordcloud import WordCloud
 from sentiment_analysis import SentimentAnalysis
+
 # 重定向print输出到文件
 
-# output_file = f"lda_output_male_to_male.log"
-# log_file = open(output_file, 'w', encoding='utf-8')
-# sys.stdout = log_file
+output_file = f"lda/logs_new/DOUYIN_lda_output_all_to_all.log"
+log_file = open(output_file, 'w', encoding='utf-8')
+sys.stdout = log_file
+
 
 # 加载分词文件
 def load_tokenized_file(file_path):
@@ -55,7 +58,7 @@ def visualize_lda_model(lda_model, corpus, dictionary):
     vis_data = gensimvis.prepare(lda_model, corpus, dictionary)
     os.makedirs("lda", exist_ok=True)
     for i in range(1, 100):
-        lda_path = f"lda/lda_{i}.html"
+        lda_path = f"lda/lda_html/lda_{i}.html"
         # 如果文件名存在则i++
         if os.path.exists(lda_path):
             continue
@@ -63,6 +66,7 @@ def visualize_lda_model(lda_model, corpus, dictionary):
             pyLDAvis.save_html(vis_data, lda_path)
             break
     return lda_path
+
 
 # 计算困惑度和一致性
 def evaluate_lda_model(lda_model, corpus, dictionary, texts):
@@ -88,12 +92,13 @@ def show_plot(perplexities, coherences, min_topics, max_topics, step):
     plt.ylabel("Coherence Score")
     plt.tight_layout()
     for i in range(1, 100):
-        output_file = f"lda/plot/perplexity_coherence_{i}.png"
+        output_file = f"lda/plot_v2/perplexity_coherence_{i}.png"
         # 如果文件名存在则i++
         if os.path.exists(output_file):
             continue
         else:
             plt.savefig(output_file, format='png')
+            print(f"困惑度、一致性曲线保存至: {output_file}")
             break
     plt.show()
 
@@ -122,13 +127,15 @@ def find_best_lda_model(min_topics, max_topics, step):
     print_lda_topics(best_lda_model)
     return best_lda_model, perplexities, coherences
 
+
 def generate_wordcloud(lda_model, topic_id, num_words=50):
     # 获取指定主题的词语及其权重
     topic_words = lda_model.show_topic(topic_id, topn=num_words)
     word_freq = {word: weight for word, weight in topic_words}
 
-    font_path='C:/Windows/Fonts/simhei.ttf'
-    wordcloud = WordCloud(width=800, height=400, background_color='white', font_path=font_path).generate_from_frequencies(word_freq)
+    font_path = 'C:/Windows/Fonts/simhei.ttf'
+    wordcloud = WordCloud(width=800, height=400, background_color='white',
+                          font_path=font_path).generate_from_frequencies(word_freq)
 
     # 显示词云图
     plt.figure()
@@ -137,8 +144,8 @@ def generate_wordcloud(lda_model, topic_id, num_words=50):
     plt.title(f'Topic #{topic_id}')
     # 保存词云图
     # output_file = f"lda/wordcloud_{topic_id}.png"
-    for i in range(1, 200):
-        output_file = f"lda/wordcloud_v2/wordcloud_{i}.png"
+    for i in range(1, 10000):
+        output_file = f"lda/wordcloud_v4/wordcloud_{i}.png"
         # 如果文件名存在则i++
         if os.path.exists(output_file):
             continue
@@ -150,49 +157,76 @@ def generate_wordcloud(lda_model, topic_id, num_words=50):
 
     return output_file
 
-def calculate_sentiment_score(lda_model, num_topics, num_words=10):
+
+def calculate_sentiment_score(lda_model, num_topics, num_words):
     sentiment_analyzer = SentimentAnalysis()
     topic_sentiments = {}
 
     for topic_id in range(num_topics):
+        print(f"计算主题#{topic_id}的情感倾向评分")
         topic_words = lda_model.show_topic(topic_id, topn=num_words)
         total_weight = sum(weight for word, weight in topic_words)
         sentiment_score = 0
 
+
+        scores = []
         for word, weight in topic_words:
+
             sentiment_result = sentiment_analyzer.sentiment_classify(word)
+            if 'items' not in sentiment_result or sentiment_result['items'] is None:
+                while True:
+                    if sentiment_result['error_code'] == 18:
+                        sleep(0.1)
+                        sentiment_result = sentiment_analyzer.sentiment_classify(word)
+                    if 'items' in sentiment_result or sentiment_result['error_code'] == 216630:
+                        break
+                    # if sentiment_result['error_code'] == 216630:
+                    #     break
+                if sentiment_result['error_code'] == 216630:
+                    # 此时为无效词
+                    total_weight = total_weight - weight
+                    continue
+
             sentiment = sentiment_result['items'][0]['sentiment']
             confidence = sentiment_result['items'][0]['confidence']
             negative_prob = sentiment_result['items'][0]['negative_prob']
             positive_prob = sentiment_result['items'][0]['positive_prob']
-
             # 计算情感评分
-            if sentiment == 2:  # positive
+            if positive_prob > negative_prob:
                 score = positive_prob * confidence
-            elif sentiment == 0:  # negative
+            elif positive_prob < negative_prob:
                 score = -negative_prob * confidence
-            else:  # neutral
-                score = 0
+            else:
+                score = 0.5
+            scores.append({weight, score})
+            # if sentiment == 2:  # positive
+            #     score = positive_prob * confidence
+            # elif sentiment == 0:  # negative
+            #     score = -negative_prob * confidence
+            # else:  # neutral
+            #     score = 0
 
-            # 加权平均
-            sentiment_score += (weight / total_weight) * score
+        # 加权平均
+        for w, s in scores:
+            sentiment_score += (w / total_weight) * s
 
         topic_sentiments[topic_id] = sentiment_score
 
     return topic_sentiments
 
 
-
 if __name__ == "__main__":
     num_cores = multiprocessing.cpu_count()
     # 示例用法
+    file_path = 'comments/douyin/tokenized/TOKENIZED_CLEANED__ALL__comments_all.json'
+    # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__ALL__comments_all.json'
     # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__MALE__comments_all.json'
     # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__UNKNOWN__comments_all.json'
     # file_path = 'comments/bilibili/tokenized_v3/TOKENIZED_CLEANED__FEMALE__comments_all.json'
     # file_path = 'comments/bilibili/categorized/tokenized/female_tokenized/TOKENIZED_CLEANED__FEMALE__comments_to_female.json'
     # file_path = 'comments/bilibili/categorized/tokenized/female_tokenized/TOKENIZED_CLEANED__MALE__comments_to_female.json'
     # file_path = 'comments/bilibili/categorized/tokenized/male_tokenized/TOKENIZED_CLEANED__FEMALE__comments_to_male.json'
-    file_path = 'comments/bilibili/categorized/tokenized/male_tokenized/TOKENIZED_CLEANED__MALE__comments_to_male.json'
+    # file_path = 'comments/bilibili/categorized/tokenized/male_tokenized/TOKENIZED_CLEANED__MALE__comments_to_male.json'
     tokenized_data = load_tokenized_file(file_path)
     dictionary, corpus = build_dictionary_and_corpus(tokenized_data)
 
@@ -202,9 +236,9 @@ if __name__ == "__main__":
     # # 输出LDA模型的主题和相关词语
     # print_lda_topics(lda_model)
 
-    min_topics = 2
+    min_topics = 10
     max_topics = 10
-    step = 2
+    step = 20
 
     best_lda_model, perplexities, coherences = find_best_lda_model(min_topics, max_topics, step)
     # 输出困惑度、一致性曲线
@@ -218,15 +252,17 @@ if __name__ == "__main__":
 
     # 生成词云图
     for topic_id in range(0, num_topics):
-        for i in range(60, 100, 10):
-            output_path = generate_wordcloud(best_lda_model, topic_id, i)
-            print(f"Topic #{topic_id}  {i}词的词云图生成完毕, 保存至: {output_path}")
+        i = 80
+        output_path = generate_wordcloud(best_lda_model, topic_id, i)
+        print(f"Topic #{topic_id}  {i}词的词云图生成完毕, 保存至: {output_path}")
 
     # 计算并输出情感倾向评分
 
-    topic_sentiments = calculate_sentiment_score(best_lda_model, num_topics)
+    topic_sentiments = calculate_sentiment_score(best_lda_model, num_topics, num_words=i)
+    sentiment_scores_sum = 0
     for topic_id, sentiment_score in topic_sentiments.items():
         print(f"Topic #{topic_id} Sentiment Score: {sentiment_score}")
-
+        sentiment_scores_sum += sentiment_score
+    print(f"Average Sentiment Score: {sentiment_scores_sum / num_topics}")
     # 关闭日志文件
-# log_file.close()
+log_file.close()

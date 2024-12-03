@@ -8,22 +8,12 @@ class DataProcessor:
         self.rep = ['@','～', 'hia', '💘','🥰','🥺','🥵','�','❌','⭕',
                     '同性', '同性恋', '说', '!', '…', '想']
         self.patterns = [
-
-            # re.compile(r'@([\u4e00-\u9fa5\w\-]+)'),
             re.compile(r'@[\u4e00-\u9fff\w\-]+'),
             re.compile(r'@\s*[\u4e00-\u9fff\w]+'),
             re.compile(r'@\w+'),
             re.compile(r'[\U00010000-\U0010ffff\uD800-\uDBFF\uDC00-\uDFFF]'),
             re.compile(r'<.*?>'),
             re.compile(r'\([^)]*\)'),
-            # re.compile("["
-            #            u"\U0001F600-\U0001F64F"  # 表情符号
-            #            u"\U0001F300-\U0001F5FF"  # 符号与图形
-            #            u"\U0001F680-\U0001F6FF"  # 交通工具
-            #            u"\U0001F1E0-\U0001F1FF"  # 国旗
-            #            u"\U00002702-\U000027B0"
-            #            u"\U000024C2-\U0001F251"
-            #            "]+", flags=re.UNICODE)
         ]
 
 
@@ -42,7 +32,9 @@ def clean_data():
 
     # file_path = "comments/bilibili/merge/"
     file_path = "comments/bilibili/categorized/merged/homo_merged/"
-    target_path = "comments/bilibili/categorized/cleaned/homo_cleaned/"
+    file_path = "comments/douyin/merge/"
+    # target_path = "comments/bilibili/categorized/cleaned/homo_cleaned/"
+    target_path = "comments/douyin/cleaned/"
     os.makedirs(target_path, exist_ok=True)
     for file in os.listdir(file_path):
         with open(file_path + file, 'r', encoding='utf-8') as f:
@@ -59,8 +51,7 @@ def main():
     data_processor = DataProcessor()
     # 读取指定文件夹进行文本清洗
     clean_data()
-    # 分词
-    # jieba.load_userdict('comments/bilibili/processed/user_dict.txt')
+
 
 
 if __name__ == "__main__":

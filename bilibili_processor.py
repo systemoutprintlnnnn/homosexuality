@@ -81,8 +81,10 @@ def get_json_files():
 
 
 def categorize_by_gender():
-    raw_file_path = "comments/bilibili/categorized/homo/"
-    processed_file_path = "comments/bilibili/categorized/processed_homo/"
+    # raw_file_path = "comments/bilibili/homo/"
+    raw_file_path = "comments/bilibili/raw/"
+    # processed_file_path = "comments/bilibili/categorized/processed_homo/"
+    processed_file_path = "comments/bilibili/processed/"
     # 读取所有原文件
     for file in os.listdir(raw_file_path):
         with open(raw_file_path + file, 'r', encoding='utf-8') as f:
@@ -124,10 +126,10 @@ def categorize_by_gender():
 
 
 def merge_comments():
-    # raw_file_path = "comments/bilibili/raw/"
-    raw_file_path = "comments/bilibili/categorized/female/"
-    # processed_file_path = "comments/bilibili/merge_v2/"
-    processed_file_path = "comments/bilibili/categorized/female_merged/"
+    raw_file_path = "comments/bilibili/raw/"
+    # raw_file_path = "comments/bilibili/categorized/female/"
+    processed_file_path = "comments/bilibili/merge_v2/"
+    # processed_file_path = "comments/bilibili/categorized/female_merged/"
     comments_male = []
     comments_female = []
     comments_unknown = []
@@ -172,6 +174,45 @@ def merge_comments():
         print(f"导出成功, 文件名: {file_name}\n")
 
 
+"""
+不区分性别，合并所有评论数据
+"""
+
+
+def merge_all_comments():
+    raw_file_path = "comments/bilibili/raw/"
+    # raw_file_path = "comments/bilibili/categorized/female/"
+    processed_file_path = "comments/bilibili/merge_v2/"
+    # processed_file_path = "comments/bilibili/categorized/female_merged/"
+    comments_all = []
+    # 读取所有原文件
+    for file in os.listdir(raw_file_path):
+        with open(raw_file_path + file, 'r', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except:
+                print(f"文件读取失败: {file}")
+            comments_info = data['commentsInfo']
+            # 遍历所有评论数据
+            for comment in comments_info:
+                comments_all.append(comment['content'])
+            print(f"导出成功, 文件名: {file}\n")
+
+        # 构建JSON数据
+
+    json_data = {
+        'commentsInfo': comments_all
+    }
+    # 输出JSON文件
+    os.makedirs(processed_file_path, exist_ok=True)
+    file_name = f"{processed_file_path}ALL__comments_all.json"
+    # file_name = f"{processed_file_path}{list(c.keys())[0]}__comments_to_female.json"
+    with open(file_name, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=4)
+
+
+
+
 def category_by_keyword():
     # 提取视频关键字
     raw_file_path = "comments/bilibili/raw/"
@@ -203,16 +244,18 @@ def category_by_keyword():
 
 if __name__ == "__main__":
     # 导出所有数据库评论数据到JSON文件
-    # get_json_files()
+    get_json_files()
+
+    # 将所有评论信息根据视频类别分类
+    # category_by_keyword()
 
     # 将所有评论信息根据性别分类
     # categorize_by_gender()
 
     # 合并所有相同性别的评论数据
     # merge_comments()
-
-    # 将所有评论信息根据视频类别分类
-    # category_by_keyword()
-    pass
+    # 不区分性别合并评论数据
+    # merge_all_comments()
 
 
+    # pass
