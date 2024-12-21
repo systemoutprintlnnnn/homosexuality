@@ -140,10 +140,10 @@ def main():
     tokenizer = BatchTokenizer(
         # input_dir='comments/bilibili/categorized/cleaned/homo_cleaned/',
         # output_dir='comments/bilibili/categorized/tokenized/homo_tokenized/',
-        # input_dir='comments/bilibili/cleaned_v2',
-        input_dir='comments/douyin/cleaned',
-        # output_dir='comments/bilibili/tokenized_v3',
-        output_dir='comments/douyin/tokenized',
+        input_dir='comments/bilibili/cleaned_v2',
+        # input_dir='comments/douyin/cleaned',
+        output_dir='comments/bilibili/tokenized_v3',
+        # output_dir='comments/douyin/tokenized',
 
         mode='precise',  # 分词模式
         remove_stopwords=True,  # 是否去除停用词

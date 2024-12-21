@@ -14,11 +14,11 @@ from pymongo import MongoClient
 from utils.credential_manager import CredentialManager
 from snowflake import SnowflakeGenerator
 
-SESSIONDATA = "df18be41%2C1748400382%2Cf8a4e%2Ab2CjDauk3D8zpQxgKS15MCUkzYBSVYI71pOCPRCT8uIDbaVbezSaRJhmmOdm1NjbPca5wSVko2LTRaYnFSdU9QMVN2VTVWcTRyM19taS0xN2Z5SU41MXhYNzBMRnhwZ0ZGZmpEY0FUWnVONFA5YVBqRmRXZjBvQkNQWWdmZ1h5bXZjVVdCOVQ3SlVRIIEC"
-BILI_JCT = "f5091aeb77b118cea0695950cb5d8c45"
+SESSIONDATA = "581c21dc%2C1748689413%2C7c837%2Ac2CjAs3Zv95eIX9NTiH5lLNbitD8c-sy31y1AgiHmTP3iivESDpB2ohtXLN8WcIo2gGkwSVkdydkJIQkwyV01VYnlWNDQzSmdVZUN6TUV6SkVXNi1EM1JHczBZaXl5aGJtVXU3QzVsUTYyZnR3bnJmMDVtYzBlMVE4OFA0Uk9CWFdqMFA4dGxqRk93IIEC; bili_jct=327a51fead660e62304d98ee38fe8af2"
+BILI_JCT = "327a51fead660e62304d98ee38fe8af2"
 BUVID3 = "A2D4DF5D-8110-2AD2-712E-CB70E86E460D66077infoc"
 DEDEUSERID = "35556285"
-AC_TIME_VALUE = "90c77ffbe73718c3027943bb866b2bb2"
+AC_TIME_VALUE = "88f211501d832c4b8685a028f94063c2"
 
 # SESSIONDATA = "5c6212a6%2C1748369428%2C0447a%2Ab1CjB_fxfOr4CgIz7d9sUI8GO3Ut41Esv4a_T4Kva3QDmWZLaqFbko9lBk4d0RojQC9eISVnN1U1V4MHVwYWloZ1VoSVRXZnNCZWF1V3QwTm1SQlhaOFczVkNRSkVhME1FYmhDMGhzTEs4a1RZUlgxbFlQcmd5YTkxd0VQNmNrMWFhT09sRkxrajZ3IIEC"
 # BILI_JCT = "1dd1c9707667a29b784aa4b9813093ac"
@@ -201,14 +201,6 @@ class BilibiliScraper:
                 content = cmt['content']['message']
                 commentsInfo.append({'uname': uname, 'usex': usex, 'content': content})
 
-                # print(f"{uname}({usex}): {content}")
-                # print(f"{cmt['member']['uname']}: {cmt['content']['message']}")
-
-            # 打印评论总数
-            # print(f"\n\n共有 {count} 条评论（不含子评论）")
-            # res['oid'] = oid
-            # res['commentsInfo'] = commentsInfo
-
             id = next(self.snowflake)
             insert_value = {
                 '_id': id,
@@ -338,8 +330,8 @@ class BilibiliScraper:
         # 搜索视频
         # search_result = await search.search(keyword, page)
         # search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.TOTALRANK, page=1)
-        search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.CLICK,
-                                                    page=page)
+        # search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.CLICK, page=page)
+        search_result = await search.search_by_type(keyword, SearchObjectType.VIDEO, order_type=OrderVideo.TOTALRANK, page=page)
         results = search_result.get('result', [])
         # for temp in results:
         # if (temp.get('result_type') in 'video'):
@@ -353,18 +345,6 @@ class BilibiliScraper:
             bvid = video.get('bvid')
             title = video.get('title')
             category = "unknown"
-
-            # is_gay = any(keyword in tag for keyword in self.gay_keywords) or any(
-            #     keyword in title for keyword in self.gay_keywords)
-            # is_les = any(keyword in tag for keyword in self.les_keywords) or any(
-            #     keyword in title for keyword in self.les_keywords)
-
-            # if is_gay and is_les:
-            #     category = "uncertain"
-            # elif is_gay:
-            #     category = "gay"
-            # elif is_les:
-            #     category = "les"
 
             video_info['tag'] = tag
             video_info['aid'] = aid
@@ -406,77 +386,9 @@ class BilibiliScraper:
             video_response.append(video_info)
 
             # 获取对应所有评论
-            commentsList = []
             aid = video.get('aid')
 
-            # # 如果已存在不更新直接跳过
-            # if self.collection.find_one({'_id': aid}):
-            #     print(f"视频 {title} 已存在，跳过")
-            #     continue
-
-            # aid = 113527025045380
-
-            # while True:
-            #     try:
-            #         r = await self.get_all_comments_by_video(aid, self.credential, OrderType.LIKE)
-            #         break
-            #     except Exception as e:
-            #         if e.status != 200:
-            #             print(f"Request failed with status 400, retrying in 5 seconds...")
-            #             await asyncio.sleep(5)
-            #         else:
-            #             raise e
-
-            # r = await self.get_all_comments_by_video_v2(aid, self.credential, title, video_info, keyword, OrderType.LIKE)
             await self.get_all_comments_by_video_v3(aid, self.credential, title, video_info, keyword, OrderType.LIKE)
-            # pprint(r)
 
-            # commentsInfo = r.get('commentsInfo')
-
-            # 存入MongoDB
-            # self.collection.insert_one({
-            #     '_id': aid,
-            #     'title': title,
-            #     'video_info': video_info,
-            #     'commentsInfo': commentsInfo
-            # })
-
-            # id = next(self.snowflake)
-            # self.collection.insert_many([{
-            #     '_id': id,
-            #     'aid': aid,
-            #     'title': title,
-            #     'video_info': video_info,
-            #     'commentsInfo': commentsInfo,
-            #     'keyword': keyword,
-            #     # 'update_time': datetime.datetime.now().timestamp()
-            # }])
-
-            # self.collection.update_one(
-            #     {'_id': id},
-            #     {
-            #         '$set': {
-            #             'aid': aid,
-            #             'title': title,
-            #             'video_info': video_info,
-            #             'commentsInfo': commentsInfo,
-            #             'keyword': keyword,
-            #             # 'update_time': datetime.datetime.now().timestamp()
-            #         }
-            #     },
-            #     upsert=True
-            # )
             print(f"视频 {title} 评论已全部存入数据库")
 
-# # 将大文档拆分成较小的文档
-# def split_large_json(large_json, chunk_size=100):
-#     comments = large_json.pop('commentsInfo')
-#     for i in range(0, len(comments), chunk_size):
-#         chunk = comments[i:i + chunk_size]
-#         small_doc = large_json.copy()
-#         small_doc['commentsInfo'] = chunk
-#         yield small_doc
-#
-# # 存储拆分后的文档
-# for small_doc in split_large_json(large_json):
-#     collection.insert_one(small_doc)
