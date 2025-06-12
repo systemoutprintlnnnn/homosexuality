@@ -1,4 +1,4 @@
-
+![image](https://github.com/user-attachments/assets/33896b57-1714-40c7-82e9-6a962f8f916e)
 # Social Media Attitudes Analysis: Gender and Homosexuality
 
 本项目旨在通过分析中国主流社交媒体平台（Bilibili、抖音）的用户评论数据，研究不同性别用户对不同类型同性恋（男性同性恋、女性同性恋）的态度差异。项目采用数据抓取、自然语言处理（NLP）、主题建模和情感分析等技术，构建了一个完整的数据分析流水线。
@@ -21,6 +21,7 @@
 - **Service Layer (服务层)**: 项目的核心业务逻辑层。包含了数据采集、预处理、清洗、分词、LDA主题建模、词云生成和情感分析等多个功能组件。
 - **Persistence Layer (持久化层)**: 使用 **JSON** 文件作为中间数据存储，用于在数据处理流程中高效地传递和暂存数据。
 - **Database Layer (数据库层)**: 采用 **MongoDB** 作为主要的数据库。其NoSQL特性非常适合存储和管理从网络上抓取的非结构化/半结构化评论数据。
+![image](https://github.com/user-attachments/assets/90f6d4a9-9368-428a-ad99-66ae9e48e3a5)
 
 ## 技术流水线 (Methodology)
 
@@ -45,17 +46,19 @@
     - 加载了停用词表（Stopwords）以移除无实际意义的词语（如“的”、“是”、“了”等），并移除了自定义的无关词，以提高后续分析的准确性。
 
 5.  **主题建模 (Topic Modeling)**:
+   ![image](https://github.com/user-attachments/assets/939316f0-d143-4d15-9e32-7859066ea707)
     - 使用 **Gensim** 库实现Latent Dirichlet Allocation (LDA) 模型。
     - 通过计算不同主题数量下的**困惑度 (Perplexity)** 和 **一致性 (Coherence)** 指标，确定最优的主题数量，以确保模型的可解释性和有效性。
 
-6.  **情感分析 (Sentiment Analysis)**:
+7.  **情感分析 (Sentiment Analysis)**:
     - 对每个LDA主题下的高频词，调用**百度智能云NLP情感倾向分析API**进行打分。
     - API返回`positive_prob`（积极概率）、`negative_prob`（消极概率）和`confidence`（置信度）。
     - 根据以下公式计算每个主题的加权情感分数，最终得到各类用户群体的整体情感倾向值：
-      ```
-      score = (positive_prob - negative_prob) * confidence
-      topic_sentiment = sum(word_weight * word_score) / sum(word_weight)
-      ```
+![image](https://github.com/user-attachments/assets/9150825c-9517-4a07-ae02-6bd924796adb)
+
+![image](https://github.com/user-attachments/assets/ef5073bf-6630-4cf8-936f-9b566470197a)
+
+![image](https://github.com/user-attachments/assets/a8f6ece5-314e-479d-8418-6b3d2025686f)
 
 ## 技术栈
 
