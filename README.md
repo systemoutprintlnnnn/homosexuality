@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/33896b57-1714-40c7-82e9-6a962f8f916e)
+
 # Social Media Attitudes Analysis: Gender and Homosexuality
 
 本项目旨在通过分析中国主流社交媒体平台（Bilibili、抖音）的用户评论数据，研究不同性别用户对不同类型同性恋（男性同性恋、女性同性恋）的态度差异。项目采用数据抓取、自然语言处理（NLP）、主题建模和情感分析等技术，构建了一个完整的数据分析流水线。
